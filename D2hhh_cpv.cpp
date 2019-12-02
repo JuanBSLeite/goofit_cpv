@@ -127,27 +127,6 @@ GooPdf* makeBackgroundPdf() {
     return ret;
 }
 
-GooPdf *makeDstar_veto() {
-   
-    VetoInfo Dstar_veto12(Variable("Dstar_veto12_min", 2.85), Variable("Dstar_veto12_max", s12_max), PAIR_12);
-    VetoInfo Dstar_veto13(Variable("Dstar_veto13_min", 2.85), Variable("Dstar_veto13_max", s12_max), PAIR_13);
-    VetoInfo Fiducial_veto12(Variable("Fiducial_veto12_min", 0.), Variable("Fiducial_veto12_max", s12.getLowerLimit()), PAIR_12);
-    VetoInfo Fiducial_veto13(Variable("DFiducial_veto13_min", 0.), Variable("Fiducial_veto13_max", s13.getLowerLimit()), PAIR_13);
-    
-    vector<VetoInfo> vetos;
-    vetos.push_back(Dstar_veto12);
-    vetos.push_back(Dstar_veto13);
-    vetos.push_back(Fiducial_veto12);
-    vetos.push_back(Fiducial_veto13);
-
-    DalitzVetoPdf* Dstar_veto = new DalitzVetoPdf("Dstar_veto", s12, s13, 
-        Variable("Mother_Mass",D_MASS), Variable("Daughter1_Mass",d1_MASS), 
-        Variable("Daughter2_Mass",d2_MASS), Variable("Daughter3_Mass",d3_MASS), 
-        vetos);
-
-    return Dstar_veto;
-}
-
 
 DalitzPlotPdf* NR_DP(GooPdf* eff = 0){
 
@@ -193,15 +172,11 @@ std::vector<std::vector<fptype>> fractions(DalitzPlotPdf* signalpdf){
     ProdPdf Prod_NRPDF{"prodNRPDF",{NRPDF}};
     DalitzPlotter dp_NR(&Prod_NRPDF,NRPDF);
     auto flatMC = new UnbinnedDataSet({s12,s13,eventNumber});
-    dp_NR.fillDataSetMC(*flatMC,100000);
+    dp_NR.fillDataSetMC(*flatMC,1000000);
 
     ProdPdf overallsignal{"overallsignal",{signalpdf}};
     overallsignal.setData(flatMC);
     signalpdf->setDataSize(flatMC->getNumEvents());
-
-
-    s12.setNumBins(400);
-    s13.setNumBins(400);
     
     signalpdf->setParameterConstantness(true); 
     FitManagerMinuit2 fitter(&overallsignal);
@@ -252,10 +227,19 @@ void gentoyMC(std::string name, size_t nevents){
 
     vector<PdfBase*> comps = {signalpdf,&bkgWithVeto};
     AddPdf* overallPdf = new AddPdf("overallPdf",weights,comps);
+  
+    s12.setNumBins(1000);
+    s13.setNumBins(1000);
 
     DalitzPlotter dp(overallPdf,signalpdf);
     toyMC = new UnbinnedDataSet({s12,s13,eventNumber});
     dp.fillDataSetMC(*toyMC,nevents);
+
+    gStyle->SetOptStat(0);
+    TCanvas foo;
+    TH2F* dp_hist = dp.make2D();
+    dp_hist->Draw("colz");
+    foo.SaveAs("MC/dp_hist.pdf");
 
     to_root(toyMC,name);
     
