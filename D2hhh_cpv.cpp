@@ -66,14 +66,10 @@ GooPdf* backgroundpdf = nullptr;
 GooPdf* efficiency = nullptr;
 GooPdf* Veto = nullptr;
 
-// PWA INPUT FILE NAME
-
-// Data File
-const string bkghisto_file = "../../../dados/bkg_histo_16.root";
-const string effhisto_file = "../../../dados/eff_16.root";
-const string bkghisto_name = "h_eff";
-const string effhisto_name = "h_eff";
-
+const string bkghisto_file = bkg_file;
+const string effhisto_file = eff_file;
+const string bkghisto_name = bkg_name;
+const string effhisto_name = eff_name;
 
 GooPdf* makeEfficiencyPdf() {
 
@@ -89,7 +85,7 @@ GooPdf* makeEfficiencyPdf() {
         s12.setValue(s12.getLowerLimit() + (s12.getUpperLimit() - s12.getLowerLimit()) * (i + 0.5) / s12.getNumBins());
         for(int j = 0; j < s13.getNumBins(); ++j) {
             s13.setValue(s13.getLowerLimit() + (s13.getUpperLimit() - s13.getLowerLimit()) * (j + 0.5) / s13.getNumBins());
-            if(!inDalitz(s12.getValue(), s13.getValue(), D_MASS, d1_MASS, d2_MASS, d3_MASS)){continue;}
+            if(!inDalitz(s12.getValue(), s13.getValue(), Mother_MASS, d1_MASS, d2_MASS, d3_MASS)){continue;}
             double weight = effHistogram->GetBinContent(effHistogram->FindBin(s12.getValue(), s13.getValue()));
             binEffData->addWeightedEvent(weight);
 
@@ -114,7 +110,7 @@ GooPdf* makeBackgroundPdf() {
         s12.setValue(s12.getLowerLimit() + (s12.getUpperLimit() - s12.getLowerLimit()) * (i + 0.5) / s12.getNumBins());
         for(int j = 0; j < s13.getNumBins(); ++j) {
             s13.setValue(s13.getLowerLimit() + (s13.getUpperLimit() - s13.getLowerLimit()) * (j + 0.5) / s13.getNumBins());
-            if(!inDalitz(s12.getValue(), s13.getValue(), D_MASS, d1_MASS, d2_MASS, d3_MASS)){continue;}
+            if(!inDalitz(s12.getValue(), s13.getValue(), Mother_MASS, d1_MASS, d2_MASS, d3_MASS)){continue;}
             double weight = bkgHistogram->GetBinContent(bkgHistogram->FindBin(s12.getValue(), s13.getValue()));
             binBkgData->addWeightedEvent(weight);
 
@@ -131,7 +127,7 @@ GooPdf* makeBackgroundPdf() {
 DalitzPlotPdf* NR_DP(GooPdf* eff = 0){
 
 	  DecayInfo3 dtoppp;
-    dtoppp.motherMass   = D_MASS;
+    dtoppp.motherMass   = Mother_MASS;
     dtoppp.daug1Mass    = d1_MASS;
     dtoppp.daug2Mass    = d2_MASS;
     dtoppp.daug3Mass    = d3_MASS;
@@ -201,7 +197,7 @@ void to_root(UnbinnedDataSet* toyMC , std::string name ){
 		t->GetEntry(i);
 		_s12 = s12.getValue();
 		_s13 = s13.getValue();
-		_s23 = POW2(D_MASS) + POW2(d1_MASS) + POW2(d2_MASS) + POW2(d3_MASS) - s12.getValue() - s13.getValue() ;
+		_s23 = POW2(Mother_MASS) + POW2(d1_MASS) + POW2(d2_MASS) + POW2(d3_MASS) - s12.getValue() - s13.getValue() ;
 		t->Fill();
     }
 	t->Write();
@@ -214,18 +210,31 @@ void gentoyMC(std::string name, size_t nevents){
     
     Veto = makeDstar_veto();
     efficiency = makeEfficiencyPdf();
-    ProdPdf *effWithVeto = new ProdPdf("effWithVeto", {Veto,efficiency});
+   
+    ProdPdf *effWithVeto = nullptr;
+ 
+    if(effOn)
+    	effWithVeto = new ProdPdf("effWithVeto", {Veto,efficiency});
+    else
+    	effWithVeto = new ProdPdf("effWithVeto", {Veto});
+
     signalpdf = makesignalpdf(effWithVeto); 
  
     backgroundpdf = makeBackgroundPdf();
     backgroundpdf->setParameterConstantness(true);
     ProdPdf bkgWithVeto{"bkgWithVeto",{backgroundpdf,Veto}}; 
     
-    Variable frac("Signal_Purity",0.925);
+    Variable frac("Signal_Purity",Signal_Purity);
     vector<Variable> weights;
     weights.push_back(frac);
 
-    vector<PdfBase*> comps = {signalpdf,&bkgWithVeto};
+    vector<PdfBase*> comps;
+    if(bkgOn)
+    	comps = {signalpdf,&bkgWithVeto};
+    else
+	comps = {signalpdf};
+	Signal_Purity = 1.;
+
     AddPdf* overallPdf = new AddPdf("overallPdf",weights,comps);
   
     s12.setNumBins(1000);
@@ -246,6 +255,7 @@ void gentoyMC(std::string name, size_t nevents){
     fractions(signalpdf); 
 
 }
+
 
 int main(int argc, char **argv){
 
