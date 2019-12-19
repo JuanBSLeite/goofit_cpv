@@ -65,11 +65,50 @@ DalitzPlotPdf* signalpdf = nullptr;
 GooPdf* backgroundpdf = nullptr;
 GooPdf* efficiency = nullptr;
 GooPdf* Veto = nullptr;
+UnbinnedDataSet* Data = nullptr;
 
 const string bkghisto_file = bkg_file;
 const string effhisto_file = eff_file;
 const string bkghisto_name = bkg_name;
 const string effhisto_name = eff_name;
+
+void loadfitdata(){
+
+    Data = new UnbinnedDataSet({s12,s13,eventNumber});
+
+    TFile *f = TFile::Open(DataFile.c_str());
+    TTree *t = (TTree *)f->Get(TreeName.c_str());
+
+    double _s12, _s13;
+
+    t->SetBranchAddress(s12Name.c_str(),&_s12);
+    t->SetBranchAddress(s13Name.c_str(),&_s13);
+    int j = 0;
+    for(size_t i = 0; i < t->GetEntries() ; i++){
+        t->GetEntry(i);
+        
+        s12.setValue(_s12);
+        s13.setValue(_s13);
+        eventNumber.setValue(i);
+
+	if((s12.getValue()<s12.getUpperLimit())&&(s13.getValue()<s13.getUpperLimit())&&
+	(s12.getValue()>s12.getLowerLimit())&&(s13.getValue()>s13.getLowerLimit())
+	){
+		Data->addEvent();
+        	j++;
+        	if(j==200000){
+          	  break;
+        	}
+        }else{
+		continue;
+	}  
+                  
+    }
+                    
+    f->Close();
+  
+    std::cout << Data->getNumEvents() << " filled in dataset!" << '\n';
+}
 
 GooPdf* makeEfficiencyPdf() {
 
@@ -206,7 +245,7 @@ void to_root(UnbinnedDataSet* toyMC , std::string name ){
 
 }
 
-void gentoyMC(std::string name, size_t nevents){
+void gentoyMC(std::string name, size_t nevents,bool getFit){
     
     Veto = makeDstar_veto();
     efficiency = makeEfficiencyPdf();
@@ -236,7 +275,16 @@ void gentoyMC(std::string name, size_t nevents){
 	Signal_Purity = 1.;
 
     AddPdf* overallPdf = new AddPdf("overallPdf",weights,comps);
-  
+
+    if(getFit){
+	loadfitdata();
+	overallPdf->setData(Data);
+	signalpdf->setDataSize(Data->getNumEvents());
+	FitManagerMinuit2 fitter(overallPdf);
+    	fitter.setMaxCalls(200000);
+	fitter.fit();    
+     }
+
     s12.setNumBins(1000);
     s13.setNumBins(1000);
 
@@ -248,7 +296,7 @@ void gentoyMC(std::string name, size_t nevents){
     TCanvas foo;
     TH2F* dp_hist = dp.make2D();
     dp_hist->Draw("colz");
-    foo.SaveAs("MC/dp_hist.pdf");
+    foo.SaveAs("MC/dp_hist.png");
 
     to_root(toyMC,name);
     
@@ -263,9 +311,11 @@ int main(int argc, char **argv){
 
     std::string name = "MC/toyMC.root";
     size_t events = 1000000;
+    bool fit = false;
     auto gen = app.add_subcommand("gen","fit toy data");
     gen->add_option("-n,--name",name,"output file name");
     gen->add_option("-e,--events",events,"number of events");
+    gen->add_option("-f,--fit",fit,"Fit");
 
     GOOFIT_PARSE(app);
 
@@ -277,6 +327,6 @@ int main(int argc, char **argv){
     
     if(*gen){
         CLI::AutoTimer timer("Gen");
-        gentoyMC(name,events);
+        gentoyMC(name,events,fit);
     }
 }

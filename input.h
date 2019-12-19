@@ -14,10 +14,17 @@ const double D_MASS   = 1.86962;
 const double Mother_MASS = DS_MASS;
 const double d1_MASS  = k_MASS;  //daughter 1 mass
 const double d2_MASS  = k_MASS;  //daughter 2 mass	
-const double d3_MASS  = pi_MASS;  //daughter 3 mass
+const double d3_MASS  = k_MASS;  //daughter 3 mass
+
+bool symdp	= true;
 
 bool effOn      = false;
 bool bkgOn	= false;
+
+std::string DataFile = "../../../dados/DsPPP_92.root";
+std::string TreeName = "DecayTree";
+std::string s12Name  = "s12_pipi_DTF";
+std::string s13Name  = "s13_pipi_DTF";
 std::string bkg_file = "../../../dados/bkg_histo_16.root";
 std::string eff_file = "../../../dados/eff_16.root";
 std::string bkg_name = "h_eff";
