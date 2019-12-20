@@ -5,7 +5,8 @@
 namespace GooFit{
 
 #define torad(x)(x*M_PI/180)
-
+#define real(x,y)(x*cos(y) )
+#define img(x,y)(x*sin(y))
 const double pi_MASS  = 0.13957018; //GEV
 const double k_MASS   = 0.493677;
 const double DS_MASS  = 1.96849; 

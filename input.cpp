@@ -56,8 +56,8 @@ DalitzPlotPdf* makesignalpdf(GooPdf* eff = 0){
                                                         Variable("ks_800_pole_img",0.300,.001,0,0),0,PAIR_12,symdp);
 
 	ResonancePdf* f0_980	= new Resonances::FLATTE("f0_980",
-							Variable("f0_980_real",1.),
-							Variable("f0_980_img",0.),
+							Variable("f0_980_real",real(1,M_PI)),
+							Variable("f0_980_img",img(1,M_PI)),
 							Variable("f0_980_mass",0.965),
 							Variable("f0_980_gpp",0.165),
 							Variable("f0_980_gkk",0.694),PAIR_12,symdp);
@@ -147,12 +147,12 @@ DalitzPlotPdf* makesignalpdf(GooPdf* eff = 0){
     //dtoppp.resonances.push_back(f0_1500);
     //dtoppp.resonances.push_back(f0_1370);
     //dtoppp.resonances.push_back(omega_782); 
-    dtoppp.resonances.push_back(rho_770); 
+    //dtoppp.resonances.push_back(rho_770); 
     //dtoppp.resonances.push_back(rho_1450);
     //dtoppp.resonances.push_back(ks_892);
     //dtoppp.resonances.push_back(ks_1430);
     //dtoppp.resonances.push_back(phi_1020);
-    dtoppp.resonances.push_back(f2_1270);
+    //dtoppp.resonances.push_back(f2_1270);
     //dtoppp.resonances.push_back(f2_1525);
     //dtoppp.resonances.push_back(k2s_1430);
     //dtoppp.resonances.push_back(nonr);
