@@ -71,6 +71,9 @@ const string bkghisto_file = bkg_file;
 const string effhisto_file = eff_file;
 const string bkghisto_name = bkg_name;
 const string effhisto_name = eff_name;
+vector<fptype> HH_bin_limits;
+vector<Variable> pwa_coefs_amp;
+vector<Variable> pwa_coefs_phs;
 
 void loadfitdata(){
 
@@ -109,6 +112,7 @@ void loadfitdata(){
   
     std::cout << Data->getNumEvents() << " filled in dataset!" << '\n';
 }
+
 
 GooPdf* makeEfficiencyPdf() {
 
@@ -248,14 +252,15 @@ void to_root(UnbinnedDataSet* toyMC , std::string name ){
 void gentoyMC(std::string name, size_t nevents,bool getFit){
     
     Veto = makeDstar_veto();
-    efficiency = makeEfficiencyPdf();
    
     ProdPdf *effWithVeto = nullptr;
  
-    if(effOn)
-    	effWithVeto = new ProdPdf("effWithVeto", {Veto,efficiency});
-    else
+    if(effOn){  
+    	efficiency = makeEfficiencyPdf();
+  	effWithVeto = new ProdPdf("effWithVeto", {Veto,efficiency});
+    }else{
     	effWithVeto = new ProdPdf("effWithVeto", {Veto});
+    }
 
     signalpdf = makesignalpdf(effWithVeto); 
  
