@@ -282,31 +282,36 @@ void gentoyMC(std::string name, size_t nevents,bool getFit){
     AddPdf* overallPdf = new AddPdf("overallPdf",weights,comps);
 
     if(getFit){
-	loadfitdata();
-	overallPdf->setData(Data);
-	signalpdf->setDataSize(Data->getNumEvents());
-	FitManagerMinuit2 fitter(overallPdf);
+	    loadfitdata();
+        s12.setNumBins(1000);
+        s13.setNumBins(1000);
+	    overallPdf->setData(Data);
+	    signalpdf->setDataSize(Data->getNumEvents());
+	    FitManagerMinuit2 fitter(overallPdf);
     	fitter.setMaxCalls(200000);
-	fitter.fit();    
-     }
+	    fitter.fit();
+        DalitzPlotter dp(overallPdf,signalpdf);    
+        dp.Plot(Mother_MASS,d1_MASS,d2_MASS,d3_MASS,"s_{k^{-} k^{+}}","s_{k^{-} #pi^{+}}","s_{k^{+} #pi^{+}}","MC",*Data);
+        fractions(signalpdf); 
+     }else{
 
-    s12.setNumBins(1000);
-    s13.setNumBins(1000);
+        s12.setNumBins(1000);
+        s13.setNumBins(1000);
 
-    DalitzPlotter dp(overallPdf,signalpdf);
-    toyMC = new UnbinnedDataSet({s12,s13,eventNumber});
-    dp.fillDataSetMC(*toyMC,nevents);
+        DalitzPlotter dp(overallPdf,signalpdf);
+        toyMC = new UnbinnedDataSet({s12,s13,eventNumber});
+        dp.fillDataSetMC(*toyMC,nevents);
 
-    gStyle->SetOptStat(0);
-    TCanvas foo;
-    TH2F* dp_hist = dp.make2D();
-    dp_hist->Draw("colz");
-    foo.SaveAs("MC/dp_hist.png");
+        gStyle->SetOptStat(0);
+        TCanvas foo;
+        TH2F* dp_hist = dp.make2D();
+        dp_hist->Draw("colz");
+        foo.SaveAs("MC/dp_hist.png");
 
-    to_root(toyMC,name);
-    
-    fractions(signalpdf); 
-
+        to_root(toyMC,name);
+        
+        fractions(signalpdf); 
+    }
 }
 
 

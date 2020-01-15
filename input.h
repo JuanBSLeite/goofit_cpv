@@ -18,17 +18,17 @@ const double d1_MASS  = k_MASS;  //daughter 1 mass
 const double d2_MASS  = k_MASS;  //daughter 2 mass	
 const double d3_MASS  = pi_MASS;  //daughter 3 mass
 
-bool symdp	= true;
+bool symdp	= false;
 
 //if true include efficiency and(or) background
 bool effOn      = false;
 bool bkgOn	= false;
 
 //data sample for fitting
-std::string DataFile = "../../../dados/DsPPP_92.root";
+std::string DataFile = "/data1000/lhcb_charm/data/2016/DKKP/DKKP_Up_2016_21_27.root";
 std::string TreeName = "DecayTree";
-std::string s12Name  = "s12_pipi_DTF";//branch name
-std::string s13Name  = "s13_pipi_DTF";//branch name
+std::string s12Name  = "s12_KK_DTF";//branch name
+std::string s13Name  = "s13_Kpi_DTF";//branch name
 //background and eff paths and histo names
 std::string bkg_file = "../../../dados/bkg_histo_16.root";
 std::string eff_file = "../../dados/eff_16.root";
