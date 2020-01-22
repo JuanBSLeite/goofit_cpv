@@ -264,9 +264,6 @@ void gentoyMC(std::string name, size_t nevents,bool getFit){
 
     signalpdf = makesignalpdf(effWithVeto); 
  
-    backgroundpdf = makeBackgroundPdf();
-    backgroundpdf->setParameterConstantness(true);
-    ProdPdf bkgWithVeto{"bkgWithVeto",{backgroundpdf,Veto}}; 
     
     Variable frac("Signal_Purity",Signal_Purity);
     vector<Variable> weights;
@@ -274,6 +271,7 @@ void gentoyMC(std::string name, size_t nevents,bool getFit){
 
     vector<PdfBase*> comps;
     if(bkgOn){
+<<<<<<< HEAD
     	comps = {signalpdf,&bkgWithVeto};
     }else{
 	    comps = {signalpdf};
@@ -281,6 +279,18 @@ void gentoyMC(std::string name, size_t nevents,bool getFit){
     }
 
     AddPdf* overallPdf = new AddPdf("overallPdf",weights,comps);
+=======
+    	backgroundpdf = makeBackgroundPdf();
+    	backgroundpdf->setParameterConstantness(true);
+    	ProdPdf bkgWithVeto{"bkgWithVeto",{backgroundpdf,Veto}}; 
+ 	comps = {signalpdf,&bkgWithVeto};
+   }else{
+	comps = {signalpdf};
+	Signal_Purity = 1.;
+   }
+   
+ AddPdf* overallPdf = new AddPdf("overallPdf",weights,comps);
+>>>>>>> 59d181a4d22cfe8dbf94e75f80051515d7fd9f13
 
     if(getFit){
 	    loadfitdata();
