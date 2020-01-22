@@ -22,7 +22,7 @@ bool symdp	= false;
 
 //if true include efficiency and(or) background
 bool effOn      = false;
-bool bkgOn	= false;
+bool bkgOn	= true;
 
 //data sample for fitting
 std::string DataFile = "/data1000/lhcb_charm/data/2016/DKKP/DKKP_Up_2016_21_27.root";
@@ -30,10 +30,10 @@ std::string TreeName = "DecayTree";
 std::string s12Name  = "s12_KK_DTF";//branch name
 std::string s13Name  = "s13_Kpi_DTF";//branch name
 //background and eff paths and histo names
-std::string bkg_file = "../../../dados/bkg_histo_16.root";
+std::string bkg_file = "/home/juan/juan/work/kkpi/BKG_wl.root";
 std::string eff_file = "../../dados/eff_16.root";
-std::string bkg_name = "h_eff";
-std::string eff_name = "h_eff";
+std::string bkg_name = "h0";
+std::string eff_name = "h";
 
 fptype s12_min = POW2(d1_MASS  + d2_MASS);
 fptype s12_max = POW2(Mother_MASS   - d3_MASS);

@@ -82,10 +82,11 @@ void loadfitdata(){
     TFile *f = TFile::Open(DataFile.c_str());
     TTree *t = (TTree *)f->Get(TreeName.c_str());
 
-    double _s12, _s13;
+    double _s12, _s13,D_M;
 
     t->SetBranchAddress(s12Name.c_str(),&_s12);
     t->SetBranchAddress(s13Name.c_str(),&_s13);
+    t->SetBranchAddress("D_M",&D_M);
     int j = 0;
     for(size_t i = 0; i < t->GetEntries() ; i++){
         t->GetEntry(i);
@@ -94,18 +95,17 @@ void loadfitdata(){
         s13.setValue(_s13);
         eventNumber.setValue(i);
 
-	if((s12.getValue()<s12.getUpperLimit())&&(s13.getValue()<s13.getUpperLimit())&&
-	(s12.getValue()>s12.getLowerLimit())&&(s13.getValue()>s13.getLowerLimit())
-	){
-		Data->addEvent();
-        	j++;
-        	if(j==200000){
-          	  break;
-        	}
-        }else{
-		continue;
-	}  
-                  
+        if((s12.getValue()<s12.getUpperLimit())&&(s13.getValue()<s13.getUpperLimit())&&
+        (s12.getValue()>s12.getLowerLimit())&&(s13.getValue()>s13.getLowerLimit())&&(D_M>1830.)&&(D_M<1910.)
+        ){
+            Data->addEvent();
+                j++;
+                if(j==200000){
+                break;
+                }
+            }else{
+            continue;
+        }           
     }
                     
     f->Close();
@@ -160,7 +160,7 @@ GooPdf* makeBackgroundPdf() {
         }
     }
 
-    Variable *effSmoothing  = new Variable("effSmoothing_bkg",0.);
+    Variable *effSmoothing  = new Variable("effSmoothing_bkg",0);
     SmoothHistogramPdf *ret = new SmoothHistogramPdf("background", binBkgData, *effSmoothing);
 
     return ret;
@@ -257,7 +257,7 @@ void gentoyMC(std::string name, size_t nevents,bool getFit){
  
     if(effOn){  
     	efficiency = makeEfficiencyPdf();
-  	effWithVeto = new ProdPdf("effWithVeto", {Veto,efficiency});
+  	    effWithVeto = new ProdPdf("effWithVeto", {Veto,efficiency});
     }else{
     	effWithVeto = new ProdPdf("effWithVeto", {Veto});
     }
@@ -273,11 +273,12 @@ void gentoyMC(std::string name, size_t nevents,bool getFit){
     weights.push_back(frac);
 
     vector<PdfBase*> comps;
-    if(bkgOn)
+    if(bkgOn){
     	comps = {signalpdf,&bkgWithVeto};
-    else
-	comps = {signalpdf};
-	Signal_Purity = 1.;
+    }else{
+	    comps = {signalpdf};
+	    Signal_Purity = 1.;
+    }
 
     AddPdf* overallPdf = new AddPdf("overallPdf",weights,comps);
 
@@ -291,6 +292,7 @@ void gentoyMC(std::string name, size_t nevents,bool getFit){
     	fitter.setMaxCalls(200000);
 	    fitter.fit();
         DalitzPlotter dp(overallPdf,signalpdf);    
+        gStyle->SetOptStat(0);
         dp.Plot(Mother_MASS,d1_MASS,d2_MASS,d3_MASS,"s_{k^{-} k^{+}}","s_{k^{-} #pi^{+}}","s_{k^{+} #pi^{+}}","MC",*Data);
         fractions(signalpdf); 
      }else{
