@@ -82,10 +82,14 @@ void loadfitdata(){
     TFile *f = TFile::Open(DataFile.c_str());
     TTree *t = (TTree *)f->Get(TreeName.c_str());
 
-    double _s12, _s13,D_M;
+    double _s12, _s13,D_M,p1_ProbNNk,p2_ProbNNk,D_IPCHI2_OWNPV,D_BPVTRGPOINTING;
 
     t->SetBranchAddress(s12Name.c_str(),&_s12);
     t->SetBranchAddress(s13Name.c_str(),&_s13);
+    t->SetBranchAddress("p1_ProbNNk",&p1_ProbNNk);
+    t->SetBranchAddress("p2_ProbNNk",&p2_ProbNNk);
+    t->SetBranchAddress("D_IPCHI2_OWNPV",&D_IPCHI2_OWNPV);
+    t->SetBranchAddress("D_BPVTRGPOINTING",&D_BPVTRGPOINTING);
     t->SetBranchAddress("D_M",&D_M);
     int j = 0;
     for(size_t i = 0; i < t->GetEntries() ; i++){
@@ -95,17 +99,18 @@ void loadfitdata(){
         s13.setValue(_s13);
         eventNumber.setValue(i);
 
-        if((s12.getValue()<s12.getUpperLimit())&&(s13.getValue()<s13.getUpperLimit())&&
-        (s12.getValue()>s12.getLowerLimit())&&(s13.getValue()>s13.getLowerLimit())&&(D_M>1830.)&&(D_M<1910.)
-        ){
-            Data->addEvent();
-                j++;
-                if(j==200000){
-                break;
-                }
-            }else{
-            continue;
-        }           
+	if((s12.getValue()<s12.getUpperLimit())&&(s13.getValue()<s13.getUpperLimit())&&
+	(s12.getValue()>s12.getLowerLimit())&&(s13.getValue()>s13.getLowerLimit())
+	){
+		Data->addEvent();
+        	j++;
+        	if(j==200000){
+          	  break;
+        	}
+        }else{
+		continue;
+	}  
+                  
     }
                     
     f->Close();
@@ -160,7 +165,7 @@ GooPdf* makeBackgroundPdf() {
         }
     }
 
-    Variable *effSmoothing  = new Variable("effSmoothing_bkg",0);
+    Variable *effSmoothing  = new Variable("effSmoothing_bkg",0.);
     SmoothHistogramPdf *ret = new SmoothHistogramPdf("background", binBkgData, *effSmoothing);
 
     return ret;
@@ -264,6 +269,9 @@ void gentoyMC(std::string name, size_t nevents,bool getFit){
 
     signalpdf = makesignalpdf(effWithVeto); 
  
+    backgroundpdf = makeBackgroundPdf();
+    backgroundpdf->setParameterConstantness(true);
+    ProdPdf bkgWithVeto{"bkgWithVeto",{backgroundpdf,Veto}}; 
     
     Variable frac("Signal_Purity",Signal_Purity);
     vector<Variable> weights;
@@ -271,26 +279,13 @@ void gentoyMC(std::string name, size_t nevents,bool getFit){
 
     vector<PdfBase*> comps;
     if(bkgOn){
-<<<<<<< HEAD
     	comps = {signalpdf,&bkgWithVeto};
     }else{
-	    comps = {signalpdf};
-	    Signal_Purity = 1.;
+        comps = {signalpdf};
+        frac.setValue(1.);//Signal_Purity = 1.;
     }
 
     AddPdf* overallPdf = new AddPdf("overallPdf",weights,comps);
-=======
-    	backgroundpdf = makeBackgroundPdf();
-    	backgroundpdf->setParameterConstantness(true);
-    	ProdPdf bkgWithVeto{"bkgWithVeto",{backgroundpdf,Veto}}; 
- 	comps = {signalpdf,&bkgWithVeto};
-   }else{
-	comps = {signalpdf};
-	Signal_Purity = 1.;
-   }
-   
- AddPdf* overallPdf = new AddPdf("overallPdf",weights,comps);
->>>>>>> 59d181a4d22cfe8dbf94e75f80051515d7fd9f13
 
     if(getFit){
 	    loadfitdata();
@@ -301,7 +296,10 @@ void gentoyMC(std::string name, size_t nevents,bool getFit){
 	    FitManagerMinuit2 fitter(overallPdf);
     	fitter.setMaxCalls(200000);
 	    fitter.fit();
-        DalitzPlotter dp(overallPdf,signalpdf);    
+        DalitzPlotter dp(overallPdf,signalpdf);
+        //toyMC = new UnbinnedDataSet({s12,s13,eventNumber});
+        //dp.fillDataSetMC(*toyMC,nevents);
+        //to_root(toyMC,name);   
         gStyle->SetOptStat(0);
         dp.Plot(Mother_MASS,d1_MASS,d2_MASS,d3_MASS,"s_{k^{-} k^{+}}","s_{k^{-} #pi^{+}}","s_{k^{+} #pi^{+}}","MC",*Data);
         fractions(signalpdf); 

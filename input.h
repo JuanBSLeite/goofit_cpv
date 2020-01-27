@@ -25,14 +25,14 @@ bool effOn      = false;
 bool bkgOn	= true;
 
 //data sample for fitting
-std::string DataFile = "/data1000/lhcb_charm/data/2016/DKKP/DKKP_Up_2016_21_27.root";
+std::string DataFile = "/home/juan/juan/work/kkpi/DKKP_UP_21_27_reduced.root";
 std::string TreeName = "DecayTree";
 std::string s12Name  = "s12_KK_DTF";//branch name
 std::string s13Name  = "s13_Kpi_DTF";//branch name
 //background and eff paths and histo names
-std::string bkg_file = "/home/juan/juan/work/kkpi/BKG_wl.root";
+std::string bkg_file = "/home/juan/juan/work/kkpi/test_eff.root";
 std::string eff_file = "../../dados/eff_16.root";
-std::string bkg_name = "h0";
+std::string bkg_name = "h";
 std::string eff_name = "h";
 
 fptype s12_min = POW2(d1_MASS  + d2_MASS);

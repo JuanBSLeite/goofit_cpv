@@ -10,13 +10,13 @@
 namespace GooFit{
 
 
-double Signal_Purity = 0.9;
+double Signal_Purity = 0.88;
 
 
 //include veto
 GooPdf *makeDstar_veto() {
    								//Veto range from a to b
-    VetoInfo Fiducial_veto12(Variable("Fiducial_veto12_min", 2.9), Variable("Fiducial_veto12_max", s12.getUpperLimit()), PAIR_12);
+    VetoInfo Fiducial_veto12(Variable("Fiducial_veto12_min", 2.85), Variable("Fiducial_veto12_max", s12.getUpperLimit()), PAIR_12);
     VetoInfo Fiducial_veto13(Variable("DFiducial_veto13_min", 2.9), Variable("Fiducial_veto13_max", s13.getUpperLimit()), PAIR_13);
     
     std::vector<VetoInfo> vetos;
@@ -129,6 +129,12 @@ DalitzPlotPdf* makesignalpdf(GooPdf* eff = 0){
 							Variable("rho_1450_mass",1.465),
 							Variable("rho_1450_width",0.4),int(1),PAIR_12,symdp);
 
+    ResonancePdf* rho_1700	= new Resonances::RBW("rho_1700",
+							Variable("rho_1700_real",1.,.001,0,0),
+							Variable("rho_1700_img",0.,.001,0,0),
+							Variable("rho_1700_mass",1.740),
+							Variable("rho_1700_width",0.1872),int(1),PAIR_12,symdp);
+
     ResonancePdf* ks_892	  = new Resonances::RBW("ks_892",
                                                         Variable("ks_892_real",1.),
                                                         Variable("ks_892_img",0.),
@@ -186,8 +192,8 @@ DalitzPlotPdf* makesignalpdf(GooPdf* eff = 0){
 
 //Push Resonances of your model 
     //dtoppp.resonances.push_back(sigma);
-    dtoppp.resonances.push_back(kappa);
-    //dtoppp.resonances.push_back(kappa_BW);
+    //dtoppp.resonances.push_back(kappa);
+    dtoppp.resonances.push_back(kappa_BW);
     dtoppp.resonances.push_back(f0_980);
     //dtoppp.resonances.push_back(f0_980_BW);
     dtoppp.resonances.push_back(a0_1450);
@@ -199,6 +205,7 @@ DalitzPlotPdf* makesignalpdf(GooPdf* eff = 0){
     //dtoppp.resonances.push_back(omega_782); 
     //dtoppp.resonances.push_back(rho_770); 
     //dtoppp.resonances.push_back(rho_1450);
+    //dtoppp.resonances.push_back(rho_1700);
     dtoppp.resonances.push_back(ks_892);
     dtoppp.resonances.push_back(phi_1020);
     dtoppp.resonances.push_back(ks_1410);
@@ -207,7 +214,7 @@ DalitzPlotPdf* makesignalpdf(GooPdf* eff = 0){
     dtoppp.resonances.push_back(a2_1320);
     dtoppp.resonances.push_back(f2_1525);
     dtoppp.resonances.push_back(k2s_1430);
-    dtoppp.resonances.push_back(nonr);
+    //dtoppp.resonances.push_back(nonr);
 
 
     if(!eff) {
