@@ -10,7 +10,7 @@
 namespace GooFit{
 
 
-double Signal_Purity = 0.88;
+double Signal_Purity = 0.9;
 
 
 //include veto
@@ -20,7 +20,7 @@ GooPdf *makeDstar_veto() {
     VetoInfo Fiducial_veto13(Variable("DFiducial_veto13_min", 2.9), Variable("Fiducial_veto13_max", s13.getUpperLimit()), PAIR_13);
     
     std::vector<VetoInfo> vetos;
-    //vetos.push_back(Fiducial_veto12);
+    vetos.push_back(Fiducial_veto12);
     //vetos.push_back(Fiducial_veto13);
 
     DalitzVetoPdf* vetoPdf = new DalitzVetoPdf("Dstar_veto", s12, s13, 
@@ -64,14 +64,14 @@ DalitzPlotPdf* makesignalpdf(GooPdf* eff = 0){
 	ResonancePdf* f0_980	= new Resonances::FLATTE("f0_980",
 							Variable("f0_980_real",1.,.001,0,0),
 							Variable("f0_980_img",0.,.001,0,0),
-							Variable("f0_980_mass",0.965),
+							Variable("f0_980_mass",0.965+0.02),
 							Variable("f0_980_gpp",0.165),
 							Variable("f0_980_gkk",0.695),PAIR_12,symdp);
 
 	ResonancePdf* f0_980_BW	= new Resonances::RBW("f0_980",
 							Variable("f0_980_real",1.,.001,0,0),
 							Variable("f0_980_img",0.,.001,0,0),
-							Variable("f0_980_mass",0.965),
+							Variable("f0_980_mass",0.965+0.02),
 							Variable("f0_980_width",0.04),int(0),PAIR_13,symdp);
 
 	ResonancePdf* f0_1370	= new Resonances::RBW("f0_1370",

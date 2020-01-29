@@ -296,10 +296,11 @@ void gentoyMC(std::string name, size_t nevents,bool getFit){
 	    FitManagerMinuit2 fitter(overallPdf);
     	fitter.setMaxCalls(200000);
 	    fitter.fit();
+        auto signal = new ProdPdf("SignalWithVeto", {signalpdf});
         DalitzPlotter dp(overallPdf,signalpdf);
-        //toyMC = new UnbinnedDataSet({s12,s13,eventNumber});
-        //dp.fillDataSetMC(*toyMC,nevents);
-        //to_root(toyMC,name);   
+        toyMC = new UnbinnedDataSet({s12,s13,eventNumber});
+        dp.fillDataSetMC(*toyMC,nevents);
+        to_root(toyMC,name);   
         gStyle->SetOptStat(0);
         dp.Plot(Mother_MASS,d1_MASS,d2_MASS,d3_MASS,"s_{k^{-} k^{+}}","s_{k^{-} #pi^{+}}","s_{k^{+} #pi^{+}}","MC",*Data);
         fractions(signalpdf); 
