@@ -13,15 +13,15 @@ const double D_MASS   = 1.86962;
 
 //Set the final state
 const double Mother_MASS = D_MASS;
-const double d1_MASS  = k_MASS;  //daughter 1 mass
-const double d2_MASS  = k_MASS;  //daughter 2 mass	
+const double d1_MASS  = pi_MASS;  //daughter 1 mass
+const double d2_MASS  = pi_MASS;  //daughter 2 mass	
 const double d3_MASS  = pi_MASS;  //daughter 3 mass
 
 bool symdp	= true;
 
 //if true include efficiency and(or) background
 bool effOn      = false;
-bool bkgOn	= false;
+bool bkgOn	= true;
 
 //data sample for fitting
 std::string DataFile = "../../../dados/DsPPP_92.root";
@@ -29,9 +29,9 @@ std::string TreeName = "DecayTree";
 std::string s12Name  = "s12_pipi_DTF";//branch name
 std::string s13Name  = "s13_pipi_DTF";//branch name
 //background and eff paths and histo names
-std::string bkg_file = "../../../dados/bkg_histo_16.root";
+std::string bkg_file = "/data1000/charmosinhos/Carolina/GooFit/goofit_cpv/BKG_D2PPP.root";
 std::string eff_file = "../../dados/eff_16.root";
-std::string bkg_name = "h_eff";
+std::string bkg_name = "h_bkg_D2PPP";
 std::string eff_name = "h_eff";
 
 fptype s12_min = POW2(d1_MASS  + d2_MASS);

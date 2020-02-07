@@ -82,10 +82,15 @@ void loadfitdata(){
     TFile *f = TFile::Open(DataFile.c_str());
     TTree *t = (TTree *)f->Get(TreeName.c_str());
 
-    double _s12, _s13;
+    double _s12, _s13,D_M,p1_ProbNNk,p2_ProbNNk,D_IPCHI2_OWNPV,D_BPVTRGPOINTING;
 
     t->SetBranchAddress(s12Name.c_str(),&_s12);
     t->SetBranchAddress(s13Name.c_str(),&_s13);
+    t->SetBranchAddress("p1_ProbNNk",&p1_ProbNNk);
+    t->SetBranchAddress("p2_ProbNNk",&p2_ProbNNk);
+    t->SetBranchAddress("D_IPCHI2_OWNPV",&D_IPCHI2_OWNPV);
+    t->SetBranchAddress("D_BPVTRGPOINTING",&D_BPVTRGPOINTING);
+    t->SetBranchAddress("D_M",&D_M);
     int j = 0;
     for(size_t i = 0; i < t->GetEntries() ; i++){
         t->GetEntry(i);
@@ -257,7 +262,7 @@ void gentoyMC(std::string name, size_t nevents,bool getFit){
  
     if(effOn){  
     	efficiency = makeEfficiencyPdf();
-  	effWithVeto = new ProdPdf("effWithVeto", {Veto,efficiency});
+  	    effWithVeto = new ProdPdf("effWithVeto", {Veto,efficiency});
     }else{
     	effWithVeto = new ProdPdf("effWithVeto", {Veto});
     }
@@ -274,40 +279,50 @@ void gentoyMC(std::string name, size_t nevents,bool getFit){
     	backgroundpdf = makeBackgroundPdf();
     	backgroundpdf->setParameterConstantness(true);
     	ProdPdf bkgWithVeto{"bkgWithVeto",{backgroundpdf,Veto}}; 
- 	comps = {signalpdf,&bkgWithVeto};
-   }else{
-	comps = {signalpdf};
-	Signal_Purity = 1.;
-   }
-   
- AddPdf* overallPdf = new AddPdf("overallPdf",weights,comps);
+    	comps = {signalpdf,&bkgWithVeto};
+    }else{
+        comps = {signalpdf};
+        frac.setValue(1.);//Signal_Purity = 1.;
+    }
+
+    AddPdf* overallPdf = new AddPdf("overallPdf",weights,comps);
 
     if(getFit){
-	loadfitdata();
-	overallPdf->setData(Data);
-	signalpdf->setDataSize(Data->getNumEvents());
-	FitManagerMinuit2 fitter(overallPdf);
+	    loadfitdata();
+        s12.setNumBins(1000);
+        s13.setNumBins(1000);
+	    overallPdf->setData(Data);
+	    signalpdf->setDataSize(Data->getNumEvents());
+	    FitManagerMinuit2 fitter(overallPdf);
     	fitter.setMaxCalls(200000);
-	fitter.fit();    
-     }
+	    fitter.fit();
+        auto signal = new ProdPdf("SignalWithVeto", {signalpdf});
+        DalitzPlotter dp(overallPdf,signalpdf);
+        toyMC = new UnbinnedDataSet({s12,s13,eventNumber});
+        dp.fillDataSetMC(*toyMC,nevents);
+        to_root(toyMC,name);   
+        gStyle->SetOptStat(0);
+        dp.Plot(Mother_MASS,d1_MASS,d2_MASS,d3_MASS,"s_{k^{-} k^{+}}","s_{k^{-} #pi^{+}}","s_{k^{+} #pi^{+}}","MC",*Data);
+        fractions(signalpdf); 
+     }else{
 
-    s12.setNumBins(1000);
-    s13.setNumBins(1000);
+        s12.setNumBins(1000);
+        s13.setNumBins(1000);
 
-    DalitzPlotter dp(overallPdf,signalpdf);
-    toyMC = new UnbinnedDataSet({s12,s13,eventNumber});
-    dp.fillDataSetMC(*toyMC,nevents);
+        DalitzPlotter dp(overallPdf,signalpdf);
+        toyMC = new UnbinnedDataSet({s12,s13,eventNumber});
+        dp.fillDataSetMC(*toyMC,nevents);
 
-    gStyle->SetOptStat(0);
-    TCanvas foo;
-    TH2F* dp_hist = dp.make2D();
-    dp_hist->Draw("colz");
-    foo.SaveAs("MC/dp_hist.png");
+        gStyle->SetOptStat(0);
+        TCanvas foo;
+        TH2F* dp_hist = dp.make2D();
+        dp_hist->Draw("colz");
+        foo.SaveAs("MC/dp_hist.png");
 
-    to_root(toyMC,name);
-    
-    fractions(signalpdf); 
-
+        to_root(toyMC,name);
+        
+        fractions(signalpdf); 
+    }
 }
 
 
