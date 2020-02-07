@@ -256,35 +256,23 @@ void to_root(UnbinnedDataSet* toyMC , std::string name ){
 
 void gentoyMC(std::string name, size_t nevents,bool getFit){
     
-    Veto = makeDstar_veto();
-   
+    Veto = makeDstar_veto(); 
     ProdPdf *effWithVeto = nullptr;
- 
-    if(effOn){  
-    	efficiency = makeEfficiencyPdf();
-  	    effWithVeto = new ProdPdf("effWithVeto", {Veto,efficiency});
-    }else{
-    	effWithVeto = new ProdPdf("effWithVeto", {Veto});
-    }
 
+    efficiency = makeEfficiencyPdf();
+    effWithVeto = new ProdPdf("effWithVeto", {Veto,efficiency});
     signalpdf = makesignalpdf(effWithVeto); 
  
-    
     Variable frac("Signal_Purity",Signal_Purity);
     vector<Variable> weights;
     weights.push_back(frac);
 
     vector<PdfBase*> comps;
-    if(bkgOn){
-    	backgroundpdf = makeBackgroundPdf();
-    	backgroundpdf->setParameterConstantness(true);
-    	ProdPdf bkgWithVeto{"bkgWithVeto",{backgroundpdf,Veto}}; 
-    	comps = {signalpdf,&bkgWithVeto};
-    }else{
-        comps = {signalpdf};
-        frac.setValue(1.);//Signal_Purity = 1.;
-    }
-
+    backgroundpdf = makeBackgroundPdf();
+    backgroundpdf->setParameterConstantness(true);
+    ProdPdf bkgWithVeto{"bkgWithVeto",{backgroundpdf,Veto}}; 
+    comps = {signalpdf,&bkgWithVeto};
+	
     AddPdf* overallPdf = new AddPdf("overallPdf",weights,comps);
 
     if(getFit){

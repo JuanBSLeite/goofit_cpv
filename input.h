@@ -21,8 +21,8 @@ const double d3_MASS  = pi_MASS;  //daughter 3 mass
 bool symdp	= false;
 
 //if true include efficiency and(or) background
-bool effOn      = false;
-bool bkgOn	= false;
+bool effOn      = true;
+bool bkgOn	= true;
 
 //data sample for fitting
 std::string DataFile = "/home/juan/juan/work/kkpi/DKKP_UP_21_27_reduced.root";
@@ -30,10 +30,10 @@ std::string TreeName = "DecayTree";
 std::string s12Name  = "s12_KK_DTF";//branch name
 std::string s13Name  = "s13_Kpi_DTF";//branch name
 //background and eff paths and histo names
-std::string bkg_file = "/data1000/charmosinhos/Carolina/GooFit/goofit_cpv/BKG_D2PPP.root";
-std::string eff_file = "../../dados/eff_16.root";
-std::string bkg_name = "h_bkg_D2PPP";
-std::string eff_name = "h";
+std::string bkg_file = "/data1000/lhcbcharm/fernanda/D3pi_files/Bkg/result.root";
+std::string eff_file = "/data1000/lhcbcharm/fernanda/D3pi_files/Acceptance/result.root";
+std::string bkg_name = "h2_wingLeftRightSpline_extra_binning";
+std::string eff_name = "h2_acceptanceSpline";
 
 fptype s12_min = POW2(d1_MASS  + d2_MASS);
 fptype s12_max = POW2(Mother_MASS   - d3_MASS);
