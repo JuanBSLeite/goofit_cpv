@@ -22,7 +22,7 @@ bool symdp	= false;
 
 //if true include efficiency and(or) background
 bool effOn      = false;
-bool bkgOn	= true;
+bool bkgOn	= false;
 
 //data sample for fitting
 std::string DataFile = "/home/juan/juan/work/kkpi/DKKP_UP_21_27_reduced.root";

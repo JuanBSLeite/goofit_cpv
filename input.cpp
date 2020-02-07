@@ -20,7 +20,7 @@ GooPdf *makeDstar_veto() {
     VetoInfo Fiducial_veto13(Variable("DFiducial_veto13_min", 2.9), Variable("Fiducial_veto13_max", s13.getUpperLimit()), PAIR_13);
     
     std::vector<VetoInfo> vetos;
-    vetos.push_back(Fiducial_veto12);
+    //vetos.push_back(Fiducial_veto12);
     //vetos.push_back(Fiducial_veto13);
 
     DalitzVetoPdf* vetoPdf = new DalitzVetoPdf("Dstar_veto", s12, s13, 
@@ -184,6 +184,14 @@ DalitzPlotPdf* makesignalpdf(GooPdf* eff = 0){
                                                         Variable("k2s_1430_img",0.,.001,0,0),
                                                         Variable("k2s_1430_mass",1.4324),
                                                         Variable("k2s_1430_width",0.109),int(2),PAIR_13,symdp);	
+    
+    
+    ResonancePdf* pwave_hanhart   = new Resonances::HanhartPWave("pwave_hanhart",
+                                                        Variable("pwave_hanhart_real",1.,.001,0,0),
+                                                        Variable("pwave_hanhart_img",0.,.001,0,0),
+                                                        Variable("pwave_hanhart_e1",1.),
+                                                        Variable("pwave_hanhart_e2",1.),PAIR_13,true);	
+  
   
     ResonancePdf *nonr 		= new Resonances::NonRes("nonr",
 							Variable("nonr_real",1.,.001,0,0), 
@@ -191,6 +199,7 @@ DalitzPlotPdf* makesignalpdf(GooPdf* eff = 0){
 
 
 //Push Resonances of your model 
+    //dtoppp.resonances.push_back(pwave_hanhart);
     //dtoppp.resonances.push_back(sigma);
     //dtoppp.resonances.push_back(kappa);
     dtoppp.resonances.push_back(kappa_BW);
