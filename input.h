@@ -5,7 +5,8 @@
 namespace GooFit{
 
 #define torad(x)(x*M_PI/180)
-
+#define real(x,y)(x*cos(y) )
+#define img(x,y)(x*sin(y))
 const double pi_MASS  = 0.13957018; //GEV
 const double k_MASS   = 0.493677;
 const double DS_MASS  = 1.96849; 
@@ -17,22 +18,22 @@ const double d1_MASS  = pi_MASS;  //daughter 1 mass
 const double d2_MASS  = pi_MASS;  //daughter 2 mass	
 const double d3_MASS  = pi_MASS;  //daughter 3 mass
 
-bool symdp	= true;
+bool symdp	= false;
 
 //if true include efficiency and(or) background
 bool effOn      = false;
-bool bkgOn	= true;
+bool bkgOn	= false;
 
 //data sample for fitting
-std::string DataFile = "../../../dados/DsPPP_92.root";
+std::string DataFile = "/home/juan/juan/work/kkpi/DKKP_UP_21_27_reduced.root";
 std::string TreeName = "DecayTree";
-std::string s12Name  = "s12_pipi_DTF";//branch name
-std::string s13Name  = "s13_pipi_DTF";//branch name
+std::string s12Name  = "s12_KK_DTF";//branch name
+std::string s13Name  = "s13_Kpi_DTF";//branch name
 //background and eff paths and histo names
 std::string bkg_file = "/data1000/charmosinhos/Carolina/GooFit/goofit_cpv/BKG_D2PPP.root";
 std::string eff_file = "../../dados/eff_16.root";
 std::string bkg_name = "h_bkg_D2PPP";
-std::string eff_name = "h_eff";
+std::string eff_name = "h";
 
 fptype s12_min = POW2(d1_MASS  + d2_MASS);
 fptype s12_max = POW2(Mother_MASS   - d3_MASS);
