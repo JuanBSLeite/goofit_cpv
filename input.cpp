@@ -1,5 +1,6 @@
 // input.cpp
 #include <vector>
+#include <string.h>
 #include <goofit/PDFs/physics/DalitzPlotPdf.h>
 #include <goofit/PDFs/GooPdf.h>
 #include <goofit/PDFs/basic/PolynomialPdf.h>
@@ -9,27 +10,49 @@
 
 namespace GooFit{
 
+ResonancePdf *loadPWAResonance(const std::string fname = "files/PWACOEFS.txt", bool fixAmp = true) {
 
-double Signal_Purity = 0.9;
+    std::ifstream reader;
+    GOOFIT_INFO("LOADING FILE {}",fname);
+    reader.open(fname.c_str());
+    assert(reader.good());
+    HH_bin_limits.clear();
+    pwa_coefs_amp.clear();
+    pwa_coefs_phs.clear();
+
+    double e1, e2, e3;
+    double emag, ephs;
+    int i = 0;
+    while(reader >> e1 >> e2 >> e3) {
+
+        HH_bin_limits.push_back(e1*e1);
+
+        emag = e2*cos(e3);
+        ephs = e2*sin(e3);
+	    
+        Variable va(fmt::format("pwa_coef_{}_mag", i), emag);
+        Variable vp(fmt::format("pwa_coef_{}_phase", i), ephs);
+        pwa_coefs_amp.push_back(va);
+        pwa_coefs_phs.push_back(vp);
+        i++;
+    }
 
 
-//include veto
-GooPdf *makeDstar_veto() {
-   								//Veto range from a to b
-    VetoInfo Fiducial_veto12(Variable("Fiducial_veto12_min", 2.85), Variable("Fiducial_veto12_max", s12.getUpperLimit()), PAIR_12);
-    VetoInfo Fiducial_veto13(Variable("DFiducial_veto13_min", 2.9), Variable("Fiducial_veto13_max", s13.getUpperLimit()), PAIR_13);
-    
-    std::vector<VetoInfo> vetos;
-    vetos.push_back(Fiducial_veto12);
-    //vetos.push_back(Fiducial_veto13);
+    Variable swave_amp_real("swave_real_coef", 1.0,0.01,-100.,+100.);
+    Variable swave_amp_imag("swave_imag_coef", 0.0,0.01,-100.,+100.);
 
-    DalitzVetoPdf* vetoPdf = new DalitzVetoPdf("Dstar_veto", s12, s13, 
-    						Variable("Mother_Mass",Mother_MASS), Variable("Daughter1_Mass",d1_MASS), 
-    						Variable("Daughter2_Mass",d2_MASS), Variable("Daughter3_Mass",d3_MASS),vetos);
+    if(fixAmp) {
+        swave_amp_real.setValue(1.);
+        swave_amp_imag.setValue(0.);
+        swave_amp_real.setFixed(true);
+        swave_amp_imag.setFixed(true);
+    }
+    std::cout << "Numbers loaded: " << HH_bin_limits.size() << " / " << i << std::endl;
 
-    return vetoPdf;
-}
+    ResonancePdf *swave_12 = new Resonances::Spline("swave_12", swave_amp_real, swave_amp_imag, HH_bin_limits, pwa_coefs_amp, pwa_coefs_phs, PAIR_12, true);
 
+    return swave_12;
+} 
 
 
 DalitzPlotPdf* makesignalpdf(GooPdf* eff = 0){
@@ -112,20 +135,20 @@ DalitzPlotPdf* makesignalpdf(GooPdf* eff = 0){
 
 
 	ResonancePdf* omega_782	= new Resonances::RBW("omega_782",
-							Variable("omega_782_real",1.,.001,0,0),
-							Variable("omega_782_img",0.,.001,0,0),
+							Variable("omega_782_real",-0.013628,.001,0,0),
+							Variable("omega_782_img",0.005175,.001,0,0),
 							Variable("omega_782_mass",0.782),
 							Variable("omega_782_width",0.0085),int(1),PAIR_12,symdp);
 	
     ResonancePdf* rho_770	= new Resonances::RBW("rho_770",
-							Variable("rho_770_real",1.,.001,0,0),
-							Variable("rho_770_img",0.,.001,0,0),
-							Variable("rho_770_mass",.7755),
+							Variable("rho_770_real",-0.021851,.001,0,0),
+							Variable("rho_770_img",0.115463,.001,0,0),
+							Variable("rho_770_mass",0.7755),
 							Variable("rho_770_width",0.149),int(1),PAIR_12,symdp);
 	
 	ResonancePdf* rho_1450	= new Resonances::RBW("rho_1450",
-							Variable("rho_1450_real",1.,.001,0,0),
-							Variable("rho_1450_img",0.,.001,0,0),
+							Variable("rho_1450_real",-0.553147,.001,0,0),
+							Variable("rho_1450_img",-1.620510,.001,0,0),
 							Variable("rho_1450_mass",1.465),
 							Variable("rho_1450_width",0.4),int(1),PAIR_12,symdp);
 
@@ -162,8 +185,8 @@ DalitzPlotPdf* makesignalpdf(GooPdf* eff = 0){
                                                         Variable("phi_1680_width",0.150),int(1),PAIR_12,symdp);
 
 	ResonancePdf* f2_1270	= new Resonances::RBW("f2_1270",
-							Variable("f2_1270_real",1.,.001,0,0),
-							Variable("f2_1270_img",0.,.001,0,0),
+							Variable("f2_1270_real",1.),
+							Variable("f2_1270_img",0.),
 							Variable("f2_1270_mass",1.2751),
 							Variable("f2_1270_width",0.185),int(2),PAIR_12,symdp);
 
@@ -190,31 +213,35 @@ DalitzPlotPdf* makesignalpdf(GooPdf* eff = 0){
 							Variable("nonr_img",0,.001,0,0));
 
 
+    //MIPWA
+    ResonancePdf *swave  = loadPWAResonance();
+
 //Push Resonances of your model 
     //dtoppp.resonances.push_back(sigma);
     //dtoppp.resonances.push_back(kappa);
-    dtoppp.resonances.push_back(kappa_BW);
-    dtoppp.resonances.push_back(f0_980);
+    //dtoppp.resonances.push_back(kappa_BW);
+    //dtoppp.resonances.push_back(f0_980);
     //dtoppp.resonances.push_back(f0_980_BW);
-    dtoppp.resonances.push_back(a0_1450);
-    dtoppp.resonances.push_back(f0_1500);
-    dtoppp.resonances.push_back(ks_1680);
-    dtoppp.resonances.push_back(f0_1710);
-    dtoppp.resonances.push_back(f0_1370);
-    dtoppp.resonances.push_back(ks_1430);
-    //dtoppp.resonances.push_back(omega_782); 
-    //dtoppp.resonances.push_back(rho_770); 
-    //dtoppp.resonances.push_back(rho_1450);
+    //dtoppp.resonances.push_back(a0_1450);
+    //dtoppp.resonances.push_back(f0_1500);
+    //dtoppp.resonances.push_back(ks_1680);
+    //dtoppp.resonances.push_back(f0_1710);
+    //dtoppp.resonances.push_back(f0_1370);
+    //dtoppp.resonances.push_back(ks_1430);
+    dtoppp.resonances.push_back(omega_782); 
+    dtoppp.resonances.push_back(rho_770); 
+    dtoppp.resonances.push_back(rho_1450);
     //dtoppp.resonances.push_back(rho_1700);
-    dtoppp.resonances.push_back(ks_892);
-    dtoppp.resonances.push_back(phi_1020);
-    dtoppp.resonances.push_back(ks_1410);
-    dtoppp.resonances.push_back(phi_1680);
+    //dtoppp.resonances.push_back(ks_892);
+    //dtoppp.resonances.push_back(phi_1020);
+    //dtoppp.resonances.push_back(ks_1410);
+    //dtoppp.resonances.push_back(phi_1680);
     dtoppp.resonances.push_back(f2_1270);
-    dtoppp.resonances.push_back(a2_1320);
-    dtoppp.resonances.push_back(f2_1525);
-    dtoppp.resonances.push_back(k2s_1430);
+    //dtoppp.resonances.push_back(a2_1320);
+    //dtoppp.resonances.push_back(f2_1525);
+    //dtoppp.resonances.push_back(k2s_1430);
     //dtoppp.resonances.push_back(nonr);
+    dtoppp.resonances.push_back(swave);
 
 
     if(!eff) {

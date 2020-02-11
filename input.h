@@ -13,27 +13,30 @@ const double DS_MASS  = 1.96849;
 const double D_MASS   = 1.86962;
 
 //Set the final state
-const double Mother_MASS = D_MASS;
-const double d1_MASS  = k_MASS;  //daughter 1 mass
-const double d2_MASS  = k_MASS;  //daughter 2 mass	
+const double Mother_MASS = DS_MASS;
+const double d1_MASS  = pi_MASS;  //daughter 1 mass
+const double d2_MASS  = pi_MASS;  //daughter 2 mass	
 const double d3_MASS  = pi_MASS;  //daughter 3 mass
 
-bool symdp	= false;
+bool symdp	= true;
 
 //if true include efficiency and(or) background
-bool effOn      = false;
-bool bkgOn	= true;
+bool effOn      = true;
+
+
+//Variables PWA
+std::vector<fptype> HH_bin_limits;
+std::vector<Variable> pwa_coefs_amp;
+std::vector<Variable> pwa_coefs_phs;
 
 //data sample for fitting
-std::string DataFile = "/home/juan/juan/work/kkpi/DKKP_UP_21_27_reduced.root";
+std::string DataFile = "../../../dados/DsPPP_92.root";
 std::string TreeName = "DecayTree";
-std::string s12Name  = "s12_KK_DTF";//branch name
-std::string s13Name  = "s13_Kpi_DTF";//branch name
+std::string s12Name  = "s12_pipi_DTF";//branch name
+std::string s13Name  = "s13_pipi_DTF";//branch name
 //background and eff paths and histo names
-std::string bkg_file = "/home/juan/juan/work/kkpi/eff_bw_20.root";
-std::string eff_file = "../../dados/eff_16.root";
-std::string bkg_name = "h_eff";
-std::string eff_name = "h";
+std::string eff_file = "../../../dados/eff_16.root";
+std::string eff_name = "h_eff";
 
 fptype s12_min = POW2(d1_MASS  + d2_MASS);
 fptype s12_max = POW2(Mother_MASS   - d3_MASS);

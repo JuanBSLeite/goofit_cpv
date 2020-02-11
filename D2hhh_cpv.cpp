@@ -62,61 +62,16 @@ using namespace ROOT;
 
 UnbinnedDataSet *toyMC = nullptr;
 DalitzPlotPdf* signalpdf = nullptr;
+DalitzPlotPdf* NRPDF = nullptr;
 GooPdf* backgroundpdf = nullptr;
 GooPdf* efficiency = nullptr;
-GooPdf* Veto = nullptr;
 UnbinnedDataSet* Data = nullptr;
 
-const string bkghisto_file = bkg_file;
 const string effhisto_file = eff_file;
-const string bkghisto_name = bkg_name;
 const string effhisto_name = eff_name;
 vector<fptype> HH_bin_limits;
 vector<Variable> pwa_coefs_amp;
 vector<Variable> pwa_coefs_phs;
-
-void loadfitdata(){
-
-    Data = new UnbinnedDataSet({s12,s13,eventNumber});
-
-    TFile *f = TFile::Open(DataFile.c_str());
-    TTree *t = (TTree *)f->Get(TreeName.c_str());
-
-    double _s12, _s13,D_M,p1_ProbNNk,p2_ProbNNk,D_IPCHI2_OWNPV,D_BPVTRGPOINTING;
-
-    t->SetBranchAddress(s12Name.c_str(),&_s12);
-    t->SetBranchAddress(s13Name.c_str(),&_s13);
-    t->SetBranchAddress("p1_ProbNNk",&p1_ProbNNk);
-    t->SetBranchAddress("p2_ProbNNk",&p2_ProbNNk);
-    t->SetBranchAddress("D_IPCHI2_OWNPV",&D_IPCHI2_OWNPV);
-    t->SetBranchAddress("D_BPVTRGPOINTING",&D_BPVTRGPOINTING);
-    t->SetBranchAddress("D_M",&D_M);
-    int j = 0;
-    for(size_t i = 0; i < t->GetEntries() ; i++){
-        t->GetEntry(i);
-        
-        s12.setValue(_s12);
-        s13.setValue(_s13);
-        eventNumber.setValue(i);
-
-	if((s12.getValue()<s12.getUpperLimit())&&(s13.getValue()<s13.getUpperLimit())&&
-	(s12.getValue()>s12.getLowerLimit())&&(s13.getValue()>s13.getLowerLimit())
-	){
-		Data->addEvent();
-        	j++;
-        	if(j==200000){
-          	  break;
-        	}
-        }else{
-		continue;
-	}  
-                  
-    }
-                    
-    f->Close();
-  
-    std::cout << Data->getNumEvents() << " filled in dataset!" << '\n';
-}
 
 
 GooPdf* makeEfficiencyPdf() {
@@ -147,89 +102,6 @@ GooPdf* makeEfficiencyPdf() {
     return ret;
 }
 
-GooPdf* makeBackgroundPdf() {
-
-   BinnedDataSet *binBkgData = new BinnedDataSet({s12, s13});
-    
-    TFile *f = new TFile(bkghisto_file.c_str());
-    auto bkgHistogram = (TH2F*)f->Get(bkghisto_name.c_str());
-
-    for(int i = 0; i < s12.getNumBins(); ++i) {
-        s12.setValue(s12.getLowerLimit() + (s12.getUpperLimit() - s12.getLowerLimit()) * (i + 0.5) / s12.getNumBins());
-        for(int j = 0; j < s13.getNumBins(); ++j) {
-            s13.setValue(s13.getLowerLimit() + (s13.getUpperLimit() - s13.getLowerLimit()) * (j + 0.5) / s13.getNumBins());
-            if(!inDalitz(s12.getValue(), s13.getValue(), Mother_MASS, d1_MASS, d2_MASS, d3_MASS)){continue;}
-            double weight = bkgHistogram->GetBinContent(bkgHistogram->FindBin(s12.getValue(), s13.getValue()));
-            binBkgData->addWeightedEvent(weight);
-
-        }
-    }
-
-    Variable *effSmoothing  = new Variable("effSmoothing_bkg",0.);
-    SmoothHistogramPdf *ret = new SmoothHistogramPdf("background", binBkgData, *effSmoothing);
-
-    return ret;
-}
-
-
-DalitzPlotPdf* NR_DP(GooPdf* eff = 0){
-
-	  DecayInfo3 dtoppp;
-    dtoppp.motherMass   = Mother_MASS;
-    dtoppp.daug1Mass    = d1_MASS;
-    dtoppp.daug2Mass    = d2_MASS;
-    dtoppp.daug3Mass    = d3_MASS;
-    dtoppp.meson_radius = 1.5;
-
-        Variable nonr_real("nonr_real",1., 0.01,0,0);
-      Variable nonr_imag("nonr_imag",0., 0.01,0,0);
-
-
-       ResonancePdf *nonr = new Resonances::NonRes("nonr", nonr_real, nonr_imag);
-       dtoppp.resonances.push_back(nonr);
-     
-       if(!eff) {
-        // By default create a constant efficiency.
-        vector<Variable> offsets;
-        vector<Observable> observables;
-        vector<Variable> coefficients;
-        Variable constantOne("constantOne", 1);
-        Variable constantZero("constantZero", 0);
-        observables.push_back(s12);
-        observables.push_back(s13);
-        offsets.push_back(constantZero);
-        offsets.push_back(constantZero);
-        coefficients.push_back(constantOne);
-        eff = new PolynomialPdf("constantEff", observables, coefficients, offsets, 0); //No efficiency
-    }
-
-       return new DalitzPlotPdf("NRPDF", s12, s13, eventNumber, dtoppp, eff);
-
-}
-
-
-
-std::vector<std::vector<fptype>> fractions(DalitzPlotPdf* signalpdf){
-
-    cout << "Fit Fractions" << endl;
-    auto NRPDF = NR_DP(0);
-    ProdPdf Prod_NRPDF{"prodNRPDF",{NRPDF}};
-    DalitzPlotter dp_NR(&Prod_NRPDF,NRPDF);
-    auto flatMC = new UnbinnedDataSet({s12,s13,eventNumber});
-    dp_NR.fillDataSetMC(*flatMC,1000000);
-
-    ProdPdf overallsignal{"overallsignal",{signalpdf}};
-    overallsignal.setData(flatMC);
-    signalpdf->setDataSize(flatMC->getNumEvents());
-    
-    signalpdf->setParameterConstantness(true); 
-    FitManagerMinuit2 fitter(&overallsignal);
-    fitter.setVerbosity(0);
-    fitter.fit();
-    
-    return signalpdf->fit_fractions();
-   
-}
 
 void to_root(UnbinnedDataSet* toyMC , std::string name ){
 
@@ -254,75 +126,46 @@ void to_root(UnbinnedDataSet* toyMC , std::string name ){
 
 }
 
-void gentoyMC(std::string name, size_t nevents,bool getFit){
+void gentoyMC(std::string name, size_t nevents){
     
-    Veto = makeDstar_veto();
-   
-    ProdPdf *effWithVeto = nullptr;
+    s12.setNumBins(1500);
+    s13.setNumBins(1500);
+    ProdPdf *eff = nullptr;
  
     if(effOn){  
     	efficiency = makeEfficiencyPdf();
-  	    effWithVeto = new ProdPdf("effWithVeto", {Veto,efficiency});
-    }else{
-    	effWithVeto = new ProdPdf("effWithVeto", {Veto});
+  	eff = new ProdPdf("eff", {efficiency});
+    	signalpdf = makesignalpdf(eff); 
+    }else{ 
+    	signalpdf = makesignalpdf(0); 
     }
 
-    signalpdf = makesignalpdf(effWithVeto); 
- 
-    backgroundpdf = makeBackgroundPdf();
-    backgroundpdf->setParameterConstantness(true);
-    ProdPdf bkgWithVeto{"bkgWithVeto",{backgroundpdf,Veto}}; 
     
-    Variable frac("Signal_Purity",Signal_Purity);
-    vector<Variable> weights;
-    weights.push_back(frac);
+    ProdPdf *ProdSignal = new ProdPdf("ProdSignal",{signalpdf});
+    signalpdf->setParameterConstantness(true);
+    
+    DalitzPlotter dp(ProdSignal,signalpdf);
+    toyMC = new UnbinnedDataSet({s12,s13,eventNumber});
+    dp.fillDataSetMC(*toyMC,nevents);
 
-    vector<PdfBase*> comps;
-    if(bkgOn){
-    	comps = {signalpdf,&bkgWithVeto};
-    }else{
-        comps = {signalpdf};
-        frac.setValue(1.);//Signal_Purity = 1.;
-    }
+    TCanvas foo;
+    auto h2 = dp.make2D();
+    h2->Rebin2D(10,10);
+    h2->Draw("colz"); foo.SaveAs("MC/DP.png");
+    auto h1 = (TH1F*)h2->ProjectionX("s12");
+    h1->Draw("HIST"); foo.SaveAs("MC/s12.png");
 
-    AddPdf* overallPdf = new AddPdf("overallPdf",weights,comps);
 
-    if(getFit){
-	    loadfitdata();
-        s12.setNumBins(1000);
-        s13.setNumBins(1000);
-	    overallPdf->setData(Data);
-	    signalpdf->setDataSize(Data->getNumEvents());
-	    FitManagerMinuit2 fitter(overallPdf);
-    	fitter.setMaxCalls(200000);
-	    fitter.fit();
-        auto signal = new ProdPdf("SignalWithVeto", {signalpdf});
-        DalitzPlotter dp(overallPdf,signalpdf);
-        toyMC = new UnbinnedDataSet({s12,s13,eventNumber});
-        dp.fillDataSetMC(*toyMC,nevents);
-        to_root(toyMC,name);   
-        gStyle->SetOptStat(0);
-        dp.Plot(Mother_MASS,d1_MASS,d2_MASS,d3_MASS,"s_{k^{-} k^{+}}","s_{k^{-} #pi^{+}}","s_{k^{+} #pi^{+}}","MC",*Data);
-        fractions(signalpdf); 
-     }else{
+    ProdSignal->setData(toyMC);
+    signalpdf->setDataSize(toyMC->getNumEvents());
+    
+    FitManager fitter(ProdSignal);
+    fitter.setVerbosity(0);
+    fitter.fit();
+    
+    signalpdf->fit_fractions();
 
-        s12.setNumBins(1000);
-        s13.setNumBins(1000);
-
-        DalitzPlotter dp(overallPdf,signalpdf);
-        toyMC = new UnbinnedDataSet({s12,s13,eventNumber});
-        dp.fillDataSetMC(*toyMC,nevents);
-
-        gStyle->SetOptStat(0);
-        TCanvas foo;
-        TH2F* dp_hist = dp.make2D();
-        dp_hist->Draw("colz");
-        foo.SaveAs("MC/dp_hist.png");
-
-        to_root(toyMC,name);
-        
-        fractions(signalpdf); 
-    }
+    to_root(toyMC,name);
 }
 
 
@@ -332,11 +175,10 @@ int main(int argc, char **argv){
 
     std::string name = "MC/toyMC.root";
     size_t events = 1000000;
-    bool fit = false;
+
     auto gen = app.add_subcommand("gen","fit toy data");
     gen->add_option("-n,--name",name,"output file name");
     gen->add_option("-e,--events",events,"number of events");
-    gen->add_option("-f,--fit",fit,"Fit");
 
     GOOFIT_PARSE(app);
 
@@ -348,6 +190,6 @@ int main(int argc, char **argv){
     
     if(*gen){
         CLI::AutoTimer timer("Gen");
-        gentoyMC(name,events,fit);
+        gentoyMC(name,events);
     }
 }
